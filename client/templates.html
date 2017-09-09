@@ -1,0 +1,42 @@
+<template name="hello">
+	<fieldset>
+		<legend>Resgiter</legend>
+		<label>Username</label>
+		<input type = "text" id = "name"/>
+		<p></p>
+		<label>Password</label> 
+		<input type = "password" id = "pwd"/>
+		<p></p>
+		<button>Register</button>
+	</fieldset>
+	<br>
+  	<p>{{msg}}</p>
+</template>
+
+<template name="signin">
+	<fieldset>
+		<legend> Sign in </legend>
+		<label> Username </label>
+		<input type = "text" id = "login_name" />
+		<p></p>
+		<label> Password </label>
+		<input type = "password" id = "login_pwd" />
+		<p></p>
+		<button> Sign In </button>
+	</fieldset>
+</template>
+
+<template name="dashboard">
+	<fieldset>
+		<legend> Dashboard </legend>
+		<p> Logged in as: {{getLoginName}} </p>
+		<p> Score: {{getscore}} </p>
+		<button id="leaderbord"> Leaderboards </button>
+		<button id="logout"> Logout </button>
+	</fieldset>
+</template>
+
+<template name = "info">
+	<br>
+	<p> {{msg}} </p>
+</template>

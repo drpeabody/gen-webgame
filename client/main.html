@@ -1,0 +1,18 @@
+<head>
+  <title>Tuscani</title>
+</head>
+
+<body> {{> parent}}</body>
+
+<template name = "parent">
+  <h1>Welcome to Tuscani!</h1>
+	{{#if getLoginName guest}}
+		{{> hello}}
+		<img src="/test.jpg" height=160 width=256 />
+		{{> signin}}
+		{{> info}}
+	{{else}}
+		{{>dashboard}}
+	{{/if}}
+</template>
+
