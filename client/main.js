@@ -1,27 +1,37 @@
 import { Template } from 'meteor/templating';
 import { ReactiveVar } from 'meteor/reactive-var';
 
-import './main.html';
+//import './main.html';
 
 text = new ReactiveVar("Sex");
 loginname = new ReactiveVar("guest");
 score = new ReactiveVar(0);
+url = new ReactiveVar("/");
 
-
-Template.info.onCreated(function helloOnCreated() {
-
-});
-
-Template.info.helpers({
-  msg() {
-	return text.get();
-  },
-});
+Template.leaderboard.created = function() {
+	var self = this;
+	self.leaders = new ReactiveVar("Fetching positions...");
+	Meteor.call('getLeaderBoardList', function(err, data){
+		self.leader.set(data);
+	});
+	Meteor.call('consolelog', self.leaders.get());
+};
 
 Template.parent.helpers({
-	getLoginName() {
+	'getLogiName': function(){
 		return loginname.get();
+	}
+});
+
+Template.leaderboard.helpers({
+	'get': function() {
+		Template.instance().leaders.get();
 	},
+});
+Template.info.helpers({
+  infolabel: function() {
+	return text.get();
+  }
 });
 
 Template.dashboard.helpers({
@@ -35,7 +45,7 @@ Template.dashboard.helpers({
 
 Template.dashboard.events({
 	'click button#logout'(event, instance) {
-		Meteor.call("consolelog", loginname.get() + " loggin out.");
+		Meteor.call("consolelog", "CLIENT: " + loginname.get() + " loggin out.");
 		loginname.set("guest");
 		score.set(0);
 		text.set("");
@@ -44,8 +54,8 @@ Template.dashboard.events({
 	}
 });
 
-Template.hello.events({
-  	'click button'(event, instance) {
+Template.register.events({
+  	'click button#btn_register'(event, instance) {
 		Meteor.call("register", $("#name").val(), $("#pwd").val());
 		Meteor.call("getMsg", function(err, data) {
 			text.set(data);
@@ -62,6 +72,7 @@ Template.signin.events({
 				text.set(data[0]);
 				loginname.set(data[1]);
 				score.set(data[2]);
+				Meteor.call('consolelog', "CLIENT: Login name changed to " + loginname.get());
 			}
 		});
 		Meteor.call("getMsg", function(err, data) {
@@ -69,3 +80,4 @@ Template.signin.events({
 		});
   	},
 });
+

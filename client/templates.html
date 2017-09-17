@@ -1,4 +1,5 @@
-<template name="hello">
+
+<template name="register">
 	<fieldset>
 		<legend>Resgiter</legend>
 		<label>Username</label>
@@ -7,7 +8,7 @@
 		<label>Password</label> 
 		<input type = "password" id = "pwd"/>
 		<p></p>
-		<button>Register</button>
+		<button id="btn_register">Register</button>
 	</fieldset>
 	<br>
   	<p>{{msg}}</p>
@@ -36,7 +37,37 @@
 	</fieldset>
 </template>
 
+<template name="leaderboard">
+	<h2> Leaders </h2>
+	<ul>
+		{{#each get}}
+			<li>{{username}}Y</li>
+		{{/each}}
+	</ul>
+</template>
+
 <template name = "info">
 	<br>
-	<p> {{msg}} </p>
+	<ul>
+		<li><a href="/" 	id="link_home">		Home</a></li>
+		<li><a href="/register" id="link_register">	Register</a></li>
+		<li><a href="/signin"	id="link_signin">	Sign in</a></li>
+		<li><a href="/leaderboards" id="link_leaders">	Leaders</a></li>
+	</ul>
+	<p> {{infolabel}} </p>
 </template>
+
+
+<template name = "parent">
+  <h1>Welcome to Tuscani!</h1>
+	<!-- DRAW ACCORDING TO URLS-->
+	{{> register}}
+	<img src="/test.jpg" height=160 width=256 />
+	{{> signin}}
+	{{> info}}
+	<!-- IF LOGGED IN DRAW A DASHBOARD LINK HERE-->
+	<!--IF NO URL MATCHES DRAW A 404 TEMPLATE-->
+	
+</template>
+
+
