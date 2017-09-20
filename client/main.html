@@ -1,23 +1,75 @@
 <head>
   <title>Tuscani</title>
 </head>
-<!--	
+
 <body>
 	{{> parent}}
 </body>
 
 <template name = "parent">
   <h1>Welcome to Tuscani!</h1>
-	{{#if getLoginName guest}}
-		{{> register}}
-		<img src="/test.jpg" height=160 width=256 />
-		{{> signin}}
-		{{> info}}
-	{{else}}
-		{{>dashboard}}
-	{{/if}}
+	{{> getTemplate}}
+	{{> hotbar}}
 </template>
--->
 
+<template name = "hotbar">
+	<ul>
+		<li><a href = "/home"> 		Home 		</a></li>
+		<li><a href = "/register">	Register	</a></li>
+		<li><a href = "/signin">	Sign In		</a></li>
+		<li><a href = "/leaderboard">	LeaderBoards	</a></li>
+	</ul>
+{{getM}}
+</template>
 
+<template name = "home">
+	<h1> This is Home </h1>
+</template>
+
+<template name="register">
+	<fieldset>
+		<legend>Resgiter</legend>
+		<label>Username</label>
+		<input type = "text" id = "name"/>
+		<p></p>
+		<label>Password</label> 
+		<input type = "password" id = "pwd"/>
+		<p></p>
+		<button id="btn_register">Register</button>
+	</fieldset>
+	<br>
+</template>
+
+<template name="signin">
+	<fieldset>
+		<legend> Sign in </legend>
+		<label> Username </label>
+		<input type = "text" id = "login_name" />
+		<p></p>
+		<label> Password </label>
+		<input type = "password" id = "login_pwd" />
+		<p></p>
+		<button> Sign In </button>
+	</fieldset>
+</template>
+
+<template name="dashboard">
+	<fieldset>
+		<legend> Dashboard </legend>
+		<p> Logged in as: {{getLoginName}} </p>
+		<p> Score: {{getscore}} </p>
+		<button id="leaderbord"> Leaderboards </button>
+		<button id="logout"> Logout </button>
+	</fieldset>
+</template>
+
+<template name="leaderboard">
+	<h2> Leaders </h2>
+	{{get}}
+</template>
+
+<template name = "notfound">
+	<h1>Error 404</h1>
+	<h2>Page not found</h2>
+</template>
 

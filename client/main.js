@@ -3,11 +3,11 @@ import { ReactiveVar } from 'meteor/reactive-var';
 
 //import './main.html';
 
-text = new ReactiveVar("Sex");
 loginname = new ReactiveVar("guest");
 score = new ReactiveVar(0);
-url = new ReactiveVar("/");
+text = new ReactiveVar("Default Message, change in future");
 
+/*
 Template.leaderboard.created = function() {
 	var self = this;
 	self.leaders = new ReactiveVar("Fetching positions...");
@@ -15,32 +15,31 @@ Template.leaderboard.created = function() {
 		self.leader.set(data);
 	});
 	Meteor.call('consolelog', self.leaders.get());
-};
+};*/
 
 Template.parent.helpers({
-	'getLogiName': function(){
-		return loginname.get();
+	getTemplate: function() {
+		var l = window.location.href;
+		if(l.endsWith('home')) return Template.home;
+		else if(l.endsWith('register')) return Template.register;
+		else if(l.endsWith('signin')) return Template.signin;
+		else if(l.endsWith('leaderboard')) return Template.leaderboard;
+		else return Template.notfound;
 	}
 });
 
 Template.leaderboard.helpers({
-	'get': function() {
-		Template.instance().leaders.get();
-	},
-});
-Template.info.helpers({
-  infolabel: function() {
-	return text.get();
-  }
+	get: function() { //Template.instance().leaders.get(); }
+		return 'SITH SITH'; }
 });
 
 Template.dashboard.helpers({
-	getLoginName() {
-		return loginname.get();
-	},
-	getscore() {
-		return score.get();
-	},
+	getLoginName() { return loginname.get(); },
+	getscore() { return score.get(); }
+});
+
+Template.hotbar.helpers({
+	getM: function(){ return text.get(); }
 });
 
 Template.dashboard.events({
