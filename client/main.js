@@ -1,31 +1,40 @@
 import { Template } from 'meteor/templating';
 import { ReactiveVar } from 'meteor/reactive-var';
+import * as RLocalStorage from 'meteor/simply:reactive-local-storage';
 
 //import './main.html';
 
-loginname = new ReactiveVar("guest");
-score = new ReactiveVar(0);
-text = new ReactiveVar("Default Message, change in future");
+page = RLocalStorage;
+function getLoginName() { return page.getItem('loginname'); }
+function getScore() { return page.getItem('score'); }
+function setLoginName(name) { page.setItem('loginname', name); }
+function setScore(score) { page.setItem('score', score); }
+function isLoggedIn() { return !(getLoginName() === 'guest'); }
+text = new ReactiveVar('Default Message, change in future');
 
-/*
-Template.leaderboard.created = function() {
-	var self = this;
-	self.leaders = new ReactiveVar("Fetching positions...");
-	Meteor.call('getLeaderBoardList', function(err, data){
-		self.leader.set(data);
-	});
-	Meteor.call('consolelog', self.leaders.get());
-};*/
+Template.parent.created = function() {
+	if(getScore() === null || getLoginName() === null){
+		setScore(0);
+		setLoginName('guest');
+		console.log('No record of previous login found, loggin in as guest');
+	}
+	console.log(getLoginName() + ' logged in with a score of ' + getScore());
+};
 
 Template.parent.helpers({
 	getTemplate: function() {
 		var l = window.location.href;
 		if(l.endsWith('home')) return Template.home;
-		else if(l.endsWith('register')) return Template.register;
-		else if(l.endsWith('signin')) return Template.signin;
+		else if(l.endsWith('register')) if(isLoggedIn()) return Template.dashboard; else return Template.register;
+		else if(l.endsWith('signin')) if(isLoggedIn()) return Template.dashboard; else return Template.signin;
 		else if(l.endsWith('leaderboard')) return Template.leaderboard;
 		else return Template.notfound;
 	}
+});
+
+Template.dashboard.helpers({
+	username: function(){ return getLoginName() },
+	score: function(){ return getScore(); }
 });
 
 Template.leaderboard.helpers({
@@ -33,21 +42,17 @@ Template.leaderboard.helpers({
 		return 'SITH SITH'; }
 });
 
-Template.dashboard.helpers({
-	getLoginName() { return loginname.get(); },
-	getscore() { return score.get(); }
-});
-
 Template.hotbar.helpers({
-	getM: function(){ return text.get(); }
+	getM: function(){ return text.get(); },
+	getLoginData: function(){ return getLoginName() + ' with score ' + getScore(); }
 });
 
 Template.dashboard.events({
 	'click button#logout'(event, instance) {
-		Meteor.call("consolelog", "CLIENT: " + loginname.get() + " loggin out.");
-		loginname.set("guest");
-		score.set(0);
-		text.set("");
+		console.log('Logout Btn pressed');
+		setLoginName('guest');
+		setScore(0);
+		text.set("Logged out successfully");
 	},
 	'click button#leaderboard'(event, instance) {
 	}
@@ -55,28 +60,19 @@ Template.dashboard.events({
 
 Template.register.events({
   	'click button#btn_register'(event, instance) {
+		console.log('Register Btn pressed');
 		Meteor.call("register", $("#name").val(), $("#pwd").val());
-		Meteor.call("getMsg", function(err, data) {
-			text.set(data);
-		});
   	},
 });
 Template.signin.events({
   	'click button'(event, instance) {
+		console.log('Sign In Btn pressed');
 		Meteor.call("signin", $("#login_name").val(), $("#login_pwd").val(), function(err, data) {
-			if(err){
-				loginname.set("guest");
-				score.set(0);
-			} else {
-				text.set(data[0]);
-				loginname.set(data[1]);
-				score.set(data[2]);
-				Meteor.call('consolelog', "CLIENT: Login name changed to " + loginname.get());
-			}
+			if(err){ console.log('This is error' + err); return;}
+			text.set(data[0]);
+			setLoginName(data[1]);
+			setScore(data[2]);
 		});
-		Meteor.call("getMsg", function(err, data) {
-			text.set(data);
-		});
-  	},
+	},
 });
 

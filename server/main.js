@@ -3,16 +3,12 @@ import { ReactiveVar } from 'meteor/reactive-var';
 
 Meteor.startup(() => {
 	playerList = new Mongo.Collection('playerList');
-	msge = "";
 });
 
 Meteor.methods({
-	consolelog: function(msg) {
-		console.log(msg)
-	},
 	register: function(name, pwd) {
 		if(name === "" || pwd === ""){
-			msge = "Cannot Register Empy Username or Password";
+			console.log("Register invoked with empty username/password, aborting.");
 			return;
 		}
 		if(playerList){
@@ -22,31 +18,46 @@ Meteor.methods({
 				msge = name + " username already taken.";
 				return;
 			}
-			playerList.insert({username: name, pass: pwd, score: parseInt(0)});
-			msge = "Registered user " + name;	
+			playerList.insert({username: name, pass: pwd, score: parseInt(0), isOnline: false});
+			
+			console.log("User " + name + " registered and loggin out");	
 		}
 	},
 	signin: function(name, pwd) {
 		if(name === "" || pwd === ""){
-			msge = "Cannot sign in with empty Username or Password";
-			return;
+			console.log("Sign in invoked with empty username or password, aborting.");
+			return ["Empty username/password", 'guest', 0];
 		}
 		if(playerList){
 			console.log("Collection found, signing in user");
 			if(playerList.find({username: name, pass: pwd}).count() != 1 || name === 'guest'){
 				console.log("Sign in unsucessful for user: " + name);
-				msge = "Cannot sign in, password or username incorrect";
-				throw new Meteor.Error(500);
+				return ["Incorrect username/password", 'guest', 0];
 			}
-			console.log(name + " signed in.");
 			var v = playerList.find({username: name}).fetch()[0];
-			msge = "Hi "+name+", Signing in, Please wait..."
-			return ["This is message", v.username, v.score];
+			playerList.update(v._id, {$set: {isOnline: true}});
+			return ["Login Successful", name, v.score];
 		}	
 	},
-	getMsg: function(){ return msge; },
+	signout: function(name, pwd) {
+		if(name === "" || pwd === ""){
+			console.log("Sign Out invoked with empty username/password, aborting.");
+			return false;
+		}
+		if(playerList){
+			console.log("Collection found, signing out user");
+			if(playerList.find({username: name, pass: pwd}).count() != 1 || name === 'guest'){
+				console.log("Sign out unsucessful for user: " + name);
+				return false;
+			}
+			console.log(name + " signed out.");
+			var v = playerList.find({username: name}).fetch()[0];
+			playerList.update(v._id, {$set: {isOnline: false}});
+			return true;
+		}
+	},
 	getChatList: function(){
-		return playerList.find({}, {fields: {'username': 1}}).fetch();//Update this function when you want to pass more data, for example filter according to who is online or who isnt
+		return playerList.find({}, {fields: {'username': 1, 'isOnline': true}}).fetch();//Update this function when you want to pass more data, for example filter according to who is online or who isnt
 	},
 	getLeaderBoardList: function(){
 		return playerList.find({}, {fields: {'username': 1, 'score': 1}}).fetch();
