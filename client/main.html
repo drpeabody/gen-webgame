@@ -18,9 +18,12 @@
 		<li><a href = "/register">	Register	</a></li>
 		<li><a href = "/signin">	Sign In		</a></li>
 		<li><a href = "/leaderboard">	LeaderBoards	</a></li>
+		<li><a href = "/dashboard">	DashBoard	</a></li>
+		<li><a href = "/chat">		Chat		</a></li>
 	</ul>
-{{getM}}
+{{getLoginData}}
 <br>
+{{getM}}
 </template>
 
 <template name = "home">
@@ -66,11 +69,21 @@
 
 <template name="leaderboard">
 	<h2> Leaders </h2>
-	{{get}}
+	{{#each get}}
+		<li> {{this.score}} {{this.username}}</li>
+	{{/each}}
 </template>
 
 <template name = "notfound">
 	<h1>Error 404</h1>
 	<h2>Page not found</h2>
 </template>
+
+<template name = "chatPanel">
+	<h2> Chat With </h2>
+	{{#each getChatList}}
+		<button class="chatBtn"> {{this.username}} </button>
+	{{/each}}
+</template>
+		
 
