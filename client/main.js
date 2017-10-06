@@ -13,17 +13,32 @@ function setLoginName(name) { page.setItem('loginname', name); }
 function setScore(score) { page.setItem('score', score); }
 function isLoggedIn() { return !(getLoginName() === DEFAULT_LOGIN_NAME); }
 text = new ReactiveVar('Default Message, change in future');
+
 Meteor.subscribe(PUB_LEADERS);
 
+
 Template.parent.created = function() {
-	if(getScore() === null || getLoginName() === null){
-		setScore(0);
-		setLoginName(DEFAULT_LOGIN_NAME);
+	name = getLoginName();
+	score = getScore();
+	if(name != null && name != 'guest'){
+		console.log('Previous Login Data found, please wait...');
+		var l;
+		Meteor.call('isLoggedIn', name, function(err, data){ if(!data){
+			setDefaults();
+			console.log(data + '  ::Previous Login Data invalid, loggin in as guest');
+		}});
+	}	
+	if(score === null || name === null){
+		setDefaults();
 		console.log('No record of previous login found, loggin in as guest');
 	}
 	console.log(getLoginName() + ' logged in with a score of ' + getScore());
 };
-Template.leaderboard.created = function() {
+
+function setDefaults(){
+	setLoginName(DEFAULT_LOGIN_NAME);
+	setScore(0);
+	setPassword('');
 }
 
 Template.parent.helpers({
@@ -35,6 +50,7 @@ Template.parent.helpers({
 		else if(l.endsWith(URL_LEADERS)) return Template.leaderboard;
 		else if(l.endsWith(URL_DASHBOARD)) if(isLoggedIn()) return Template.dashboard; else return Template.signin;
 		else if(l.endsWith(URL_CHAT)) if(isLoggedIn()) return Template.chatPanel; else return Template.signin;
+		else if(l.endsWith(URL_CHATROOM)) if(isLoggedIn()) return Template.chatroom; else return Template.signin;
 		else return Template.notfound;
 	}
 });
@@ -44,6 +60,10 @@ Template.chatPanel.helpers({ getChatList: function(){ return playerList.find({is
 Template.dashboard.helpers({
 	username: function(){ return getLoginName() },
 	score: function(){ return getScore(); }
+});
+
+Template.chatroom.helpers({
+	getTargetName: function(){ return "**Name**"; }
 });
 
 Template.leaderboard.helpers({
@@ -70,7 +90,27 @@ Template.dashboard.events({
 });
 
 Template.chatPanel.events({
-	'click .chatBtn': function(event) { console.log("CLIENT + " + this.id); }
+	'click button#startchat': function(event) {
+		var name = $("#target").val();
+		if(playerList.findOne({username: name}) === undefined){
+			text.set("Illegal player name for chat!");
+			return;
+		}//Publish chat properly.
+		Meteor.call('publishChatForUser', getLoginName(), getPassword(), function(err, data){
+			console.log('Data Publish Request Made for key: ' + data);
+			Meteor.subscribe(data);
+			chatList.find({}).fetch().forEach((x) => console.log(x));		
+		});
+	},
+	'click button#send': function(event) {
+		var rec = $("#chatRec").val();
+		var mes = $("#chatMes").val();
+		if(playerList.findOne({username: rec}) === undefined){
+			text.set("Illegal player name for chat!");
+			return;
+		}
+		Meteor.call('sendMessage', getLoginName(), getPassword(), rec, mes);
+	}
 });
 
 Template.register.events({

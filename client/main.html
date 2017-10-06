@@ -81,9 +81,25 @@
 
 <template name = "chatPanel">
 	<h2> Chat With </h2>
-	{{#each getChatList}}
-		<button class="chatBtn"> {{this.username}} </button>
-	{{/each}}
+	<fieldset> <legend> Chat Panel </legend>
+		{{#each getChatList}}
+			<li> {{this.username}} </li>
+		{{/each}}
+		<input type = "text" id = "target" />
+		<button id = "startchat"> Get Chat </button> 
+	</fieldset>
+	<fieldset> <legend>Send a Message!</legend> 
+		<label> Send to: </label> <input type = "text" id = "chatRec" />
+		<label> Message: </label> <input type = "text" id = "chatMes" /> 
+		<button id = "send"> Send </button> 
+	</fieldset>
 </template>
+
+<template name = "chatroom">
+	<h2> Chat with {{getTargetName}} </h2>
+	<p> Conversations </p>
+	<button id = "startchat" href = "/chat"> Back </button> 
+</template>
+	
 		
 
