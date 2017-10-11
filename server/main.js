@@ -1,100 +1,63 @@
 import { Meteor } from 'meteor/meteor';
-import { ReactiveVar } from 'meteor/reactive-var';
+//import { ReactiveVar } from 'meteor/reactive-var';
 
 //Meteor.onClose(() => {
 	//playerList.find({}).fetch().forEach((v) => playerList.update(v._id, {$set: {isOnline: false}}));
 //});
 
-Meteor.publish(PUB_LEADERS, function (){ return playerList.find({}, {fields: {pass: 0}})});
+Meteor.publish(PUB_LEADERS, function (){ return playerList.find({}, {fields: {pass: 0}});});
 
-players = [];//List of signed in players, always sorted
-
-//playerList.find({}).fetch().forEach((v) => console.log(v));
-//playerList.find({}).fetch().forEach((v) => playerList.update(v._id, {$set: {isOnline: false}}));
-//console.log(playerList.find({}).fetch());
+players = [];//Important: players is sorted according to the 'id' field of the array
+//content of the array - [{id: <name>, state: <state>, notif: <communication variable>, room}]
 
 //GameFlow for Client
 //Login -> requestGame() -> Listen for changes in getVitalData() -> Retreive Room Key -> call readyForGame() -> wait
 //For Server
-//Client Login - Add him to the list of players isPlaying - false, isLookingForGame - false, notif - ####
-//Client requestGame() - isLookingForGame - true, matchmaking, if players found, create room, set all notifs to roomKey 
-//Client readyForGame() - isLookingForGame - false, isPlaying - true, set all Notifs to establish direct Connection to other players
+//Server states:
+	//0 - Logged in palying it cool
+	//1 - Looking for Game
+	//2 - Game found, allotted a room
+	//3 - Playing
+//Client Login - Add him to the list of players - state set to 0
+//Client requestGame() - set state to 1 - look for rooms - if found, add him to the room and return room key - if not found, return "TimeOut" state identifier
+//Client readyForGame() - set state to 2 - Cross check for a valid room allotment - initialise game
 
 console.log("server started");
 
 Meteor.methods({
 	register: function(name, pwd) {
-		if(areEmptyCreds(name, pwd, 'register') return;
-		if(playerList.find({username: name}).count() > 0 || name === 'guest'){
-			console.log("Registration aborted, duplicate username: " + name);
-			msge = name + " username already taken.";
-			return;
-		}
+		if(areEmptyCreds(name, pwd, 'register')) return "Empty Username or Password";
+		if(playerList.find({username: name}).count() > 0 || name === 'guest') return "Username already taken";
 		playerList.insert({username: name, pass: pwd, score: parseInt(0)});
-		console.log("User " + name + " registered and loggin out");	
 	},
 	signin: function(name, pwd) {
-		if(areEmptyCreds(name, pwd, 'signin') return ["Empty username/password", 'guest', 0];
-		if(!authenticateCreds(name, pwd)){
-			console.log("Access Denied: Sign in unsucessful for " + name);
-			return ["Incorrect username/password", 'guest', 0];
-		}
-		if(isOnline(name)){
-			console.log("Sign in unseccuessful for user: " + name);
-			return ["User already Logged in on some other system", 'guest', 0];
-		}
-		addPlayer({id: name, isPlaying: false, isLookingForGame: false, notif: 'Nope'}); 
-		//notif is changed to the RoomKey when a match is found and a room is generated - This is how client is notified of the matchmaking
-		//Client should call readyForGame() to set isPlaying to true, allowing for syncing before starting game
-		//isLookingForGame is used in matchmaking
-		//Client should regularly query the notif tag for update if a game is found
-		return ["Login Successful", name, v.score];	
+		if(!authenticateCreds(name, pwd)) return ["Incorrect username/password", 'guest', 0];
+		//Add Player checks for already signed in cases automatically
+		if(addPlayer({id: name, state: 0, notif: ''})) return ["Login Successful", name, playerList.findOne({username: name, pass: pwd}).score];
+		else return ["Login failed", 'guest', 0];
 	},
 	signout: function(name, pwd) {
-		if(areEmptyCreds(name, pwd, 'register') return false;
-		if(!authenticateCreds(name, pwd)){
-			console.log("Access Denied: Sign out unsucessful for " + name);
-			return false;
-		}
-		console.log(name + " signed out.");
+		if(!authenticateCreds(name, pwd)) return false;
 		var v = findSupposedPosOfPlayer(name);
-		if(!v.found){
-			console.log(name + '\'s Login Entry not Found.');
-			return false;
-		}
+		if(!v.found) return false;
 		else {
 			removePlayer(v.idx);	
 			return true;
 		}
 	},
 	requestGame: function(name, pwd){
-		if(areEmptyCreds(name, pwd, 'register') return false;
-		if(!authenticateCreds(name, pwd)){
-			console.log("Access Denied: Sign out unsucessful for " + name);
-			return false;
-		}
-		var v = findSupposedPosOfPlayer(name);
-		if(!v.found){
-			console.log(name + '\'s Login Entry not Found.');
-			return false;
-		}
-		else{
-			players[v.idx].isLookingForGame = true;
-			opponent = getWaitingPlayer();
-			//This function should not return anything. This is a request, client should query getVitalData() to learn about the reply
-			//If player is found hostRoom() an change notif for all the players to roomKey
-			//Otherwise return error
-		}
+		//Todo
 	},
 	sendMessageToRoom: function(key, author, message){
-		chatList.insert({AccessToken: key, author: author, message: message});
+		//Todo
 	},
 	getVitalData: function(name, pwd){
+		if(!authenticateCreds(name, pwd)) return undefined;
 		var v = findSupposedPosOfPlayer(name);
-		if(v.found) return players[v.idx].notif; 
-		else return 'Nope'
+		if(v.found) return players[v.idx].notif;
+		else return undefined;
 	},
-	readyForGame: function(){
+	readyForGame: function(roomKey){
 		
 		//Check if all players in the room are ready
 		//If they are, begin game
@@ -105,15 +68,10 @@ Meteor.methods({
 
 function getWaitingPlayer(){
 	//MatchMaking
-}
-
-function hostRoom(){
-	Meteor.publish(PUB_CHAT, function(){ return chatList.find({AccessToken: key}); });
-	return hash(new Date().getTime());
-}
-	
+}	
 
 function authenticateCreds(name, pwd){
+	if(areEmptyCreds(name, pwd, 'register')) return false;
 	return playerList.find({username: name, pass: pwd}).count() === 1;
 }
 
@@ -126,7 +84,7 @@ function isOnline(name){
 }
 
 function findSupposedPosOfPlayer(id){
-	low = 0, high = players.length;
+	var low = 0, high = players.length;
 	while(low != high){
 		med = parseInt((high + low)/2);
 		if(players[med].id < id) high = med;
@@ -140,15 +98,18 @@ function removePlayer(idx){
 	players.splice(idx, 1);
 }
 
-function areEmptyCreds(name, pwd, f){
+function areEmptyCreds(name, pwd, fnName){
 	if(name === "" || pwd === ""){
-		console.log(f + " Called with Empty Credentials...");
+		console.log(fnName + " Called with Empty Credentials...");
 		return true;
 	}
 	return false;
 }
 
-function addPlayer(l){
-	//Add sorting add code here
+function addPlayer(objPlayer){
+	var v = findSupposedPosOfPlayer(objPlayer.id);
+	if(v.found) return false;
+	players.splice(v.idx, 0, objPlayer);
+	return true;
 }
 	
