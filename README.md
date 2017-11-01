@@ -19,3 +19,9 @@ $ meteor
 ## How to build a game for Zeno - 
 
 > Documentation coming soon!
+
+## Contributors - 
+
+ * [Abhishek Agarwal](https://github.com/drpeabody)
+ * [Jayanth Krishnan]()
+ * [Shashank Varanasi](https://github.com/CrazyByDefault)
