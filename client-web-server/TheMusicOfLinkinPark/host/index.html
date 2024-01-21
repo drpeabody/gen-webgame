@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Host View</title>
+        <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    </head>
+    <H1>RoomId: <span id="room-id">null</span></H1>
+    <body>
+        <script>
+            var peer = new Peer();
+            peer.on('open', function(id) {
+                document.getElementById("room-id").innerHTML = peer.id;
+            });
+            peer.on('connection', function(conn) {
+                let logLineHtmlDomElement = document.createElement("p");
+                logLineHtmlDomElement.innerHTML = "Connection Received: " + conn.peer;
+                document.body.append(logLineHtmlDomElement);
+                conn.on('open', function() {
+                    // Receive messages
+                    // conn.on('data', function(data) {
+                    //     console.log('Received', data);
+                    // });
+
+                    // Send messages
+                    conn.send(JSON.stringify({"status": "down", "data": null}));
+                });
+
+                conn.on('close', function() {
+                    let children = document.body.children;
+                    // TODO
+                });
+            });
+        </script>
+    </body>
+</html>

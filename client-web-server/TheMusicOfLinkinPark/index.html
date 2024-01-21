@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>The Music Of Linkin Park Web Concert</title>
+        <style>
+            /* canvas { width: 600; height: 300 } */
+            body { 
+                margin: 0;
+                overflow: hidden;
+            }
+            #welcome-text {
+                text-align: center; 
+                position: fixed; 
+                z-index: 10; 
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 50%;
+            }
+        </style>
+        <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    </head>
+    <body>
+        <canvas id="canvas"></canvas>
+        <h1 id="welcome-text"> The Music of Linkin Pak Web Concert, ask your friends for the URL now!</h1>
+        <script>
+            
+            var peer = new Peer();
+            peer.on('open', function(id) {
+                console.log("Connected: " + peer.id);
+                
+                try {
+                    var url = window.location.search;
+                    console.log("URL RECEIVED: " + url);
+                    var getQuery = url.split('?')[1];
+                    var pair = getQuery.split('=');
+
+                    if(pair[0] === "RoomId" && typeof pair[1] === "string") {
+                        const conn = peer.connect(pair[1]);
+                        conn.on('open', function() {
+                            document.getElementById("welcome-text").innerHTML = "Click Left Mouse Button to connect to Web Concert";
+                            // Send messages
+                            // conn.send('get-info');
+                        });
+                        conn.on('data', function(data) {
+                            // Receive messages
+                            console.log('Received', data);
+                            let dataJson = JSON.parse(data);
+
+                            if(dataJson["status"] === "down") {
+                                document.getElementById("welcome-text").innerHTML = "Waiting for HOST To Start Web Concert";
+                            } else if (dataJson["status"] === "up") {
+                                Object.defineProperty( window, "isConcertRunningFromHostSide", {
+                                    value: true,
+                                    writable: false,
+                                    enumerable: true,
+                                    configurable: true
+                                }); // Makes obj.<key> unwritable and final
+                            } else {
+                                throw new Error("Invalid dataJson: " + dataJson);
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.log(error);
+                }
+            });
+
+        </script>
+    </body>
+    
+    <script src="./index.js"></script>
+</html>

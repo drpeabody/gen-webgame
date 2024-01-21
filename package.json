@@ -1,0 +1,11 @@
+{
+  "name": "zeno_mirror",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p .",
+    "start": "npm run build -- -w",
+    "server": "node zeno-ultra/server.cjs",
+    "client-web-server": "cd client-web-server && node server.cjs"
+  }
+}
