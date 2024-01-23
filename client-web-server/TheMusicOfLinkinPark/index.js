@@ -69,7 +69,7 @@ function draw() {
     requestAnimationFrame(draw);
 };
 
-document.onclick = () => {
+loadFirstSong = () => {
 
     if(source != null) {
         console.log("Source is already loaded, returning");

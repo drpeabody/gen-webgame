@@ -12,10 +12,25 @@
                 text-align: center; 
                 position: fixed; 
                 z-index: 10; 
+                top: 30%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+            }
+            #username-input {
+                text-align: center; 
+                position: fixed; 
+                z-index: 10; 
                 top: 50%;
                 left: 50%;
                 transform: translate(-50%, -50%);
-                width: 50%;
+            }
+            #join-button {
+                text-align: center; 
+                position: fixed; 
+                z-index: 10; 
+                top: 60%;
+                left: 50%;
+                transform: translate(-50%, -50%);
             }
         </style>
         <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
@@ -23,11 +38,40 @@
     <body>
         <canvas id="canvas"></canvas>
         <h1 id="welcome-text"> The Music of Linkin Pak Web Concert, ask your friends for the URL now!</h1>
-        <input type="text" value="..." />
+        <input type="text" value="" id="username-input" size="30"/>
+        <input type="button" value="Join Concert" id="join-button" onclick="joinConcert()"/>
         <script>
             
             let roomId = null;
             // Initialize room Id if present
+
+            function giveUserMsgThroughLabel(obj) {
+                document.getElementById("welcome-text").innerHTML = obj;
+            }
+
+            function isRoomIdAvailable() {
+                return roomId != null;
+            }
+
+            function hasPeerConnectedToConcertRoomOnce() {
+                return Object.keys(peer.connections).length > 0 && hostConnection != null;
+            }
+
+            function hideStartingUI() {
+                document.getElementById("welcome-text").style.display = "none";
+                document.getElementById("username-input").style.display = "none";
+                document.getElementById("join-button").style.display = "none";
+            }
+
+            function writeFinalPropertyOfObject(object, property, value) {
+                Object.defineProperty( object, property, {
+                    value: value, //  Makes obj.<key> unwritable and final
+                    writable: false,
+                    enumerable: true,
+                    configurable: true
+                });
+            }
+
             try {
                 let url = window.location.search;
                 console.log("URL RECEIVED: " + url);
@@ -36,39 +80,50 @@
                 
                 if(pair[0] === "RoomId" && typeof pair[1] === "string") {
                     roomId = pair[1];
-                    document.getElementById("welcome-text").innerHTML = "Establishing Connection to Web Concert...";
+                    giveUserMsgThroughLabel("Establishing Connection to Web Concert...");
                 }
             } catch (error) {
                 throw new Error("Invalid dataJson: " + dataJson);
             }
 
+            joinConcert = () => {
+                let usernameTextField = document.getElementById("username-input");
+                let value = usernameTextField.value;
+                if(!value || value === null || value === '') {
+                    giveUserMsgThroughLabel("Invalid username: " + value + ", try another username");
+                } else {
+                    if(isRoomIdAvailable() && hasPeerConnectedToConcertRoomOnce()) {
+                        hostConnection.send('');
+                    } else {
+                        console.log("Something Went Wrong when starting concert: ", roomId, peer.connections, hostConnection);
+                    }
+                }
+            }
+
             const peer = new Peer();
+            let hostConnection = null;
+
             peer.on('open', function(id) {
                 console.log("Connected: " + peer.id);
                 
                 try {
-                    const conn = peer.connect(roomId);
-                    conn.on('open', function() {
-                        document.getElementById("welcome-text").innerHTML = "Web Concert Connectd: Enter Your Name and Click anywhere to Start!";
+                    hostConnection = peer.connect(roomId);
+                    hostConnection.on('open', function() {
+                        giveUserMsgThroughLabel("Web Concert Connectd: Enter Your Name to Start!");
                         // Send messages
                         // conn.send('get-info');
                     });
-                    conn.on('data', function(data) {
+                    hostConnection.on('data', function(data) {
                         // Receive messages
                         console.log('Received', data);
-                        let dataJson = JSON.parse(data);
 
-                        if(dataJson["active"] === false) {
-                            document.getElementById("welcome-text").innerHTML = "Waiting for HOST To Start Web Concert";
-                        } else if (dataJson["active"] === true) {
-                            Object.defineProperty( window, "isConcertRunningFromHostSide", {
-                                value: true,
-                                writable: false,
-                                enumerable: true,
-                                configurable: true
-                            }); // Makes obj.<key> unwritable and final
+                        if(data["active"] === false) {
+                            giveUserMsgThroughLabel("Waiting for HOST To Start Web Concert");
+                        } else if (data["active"] === true) {
+                            hideStartingUI();
+                            loadFirstSong();   // Load nth song if client is joining in the middle
                         } else {
-                            throw new Error("Invalid dataJson: " + dataJson);
+                            throw new Error("Invalid data: " + data);
                         }
                     });
                 } catch (error) {

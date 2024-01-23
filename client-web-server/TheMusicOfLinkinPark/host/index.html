@@ -10,22 +10,42 @@
         <body>
             <input type="button" value="Launch Concert" id="launch-button" onclick="LaunchButtonClicked()"/>
             <div id="connection-list"></div>
+            <div id="concert-data">
+                <h2 id="concert-live-state"> Offline </h2>
+            </div>
         </body>
 
         <script>
+
+            const SECS = 1000;
+            const MINS = SECS * 60;
+            const HRS = MINS * 60;
 
             const concertState = {
                 active: false,
                 concertStartTime: -1
             }
-            const concertStartTime = null;
+
+            function formatElapsedTime(elapsedtime, timeunit, base) {
+                let time = base ? (elapsedtime / timeunit) % base : elapsedtime / timeunit;
+                time = Math.floor(time);
+                time = time < 10 ? '0' + time : time;
+                return time;
+            }
 
             function LaunchButtonClicked() {
                 // Prep concert state
                 concertState.concertStartTime = Date.now();
+                setInterval(() => {
+                    let timeElapsed = Date.now() - concertState.concertStartTime;
+                    document.getElementById("concert-live-state").innerHTML = "Online since " + 
+                        `${formatElapsedTime(timeElapsed, HRS, 24)}:${formatElapsedTime(timeElapsed, MINS, 60)}:${formatElapsedTime(timeElapsed, SECS, 60)}`;
+                }, 1000);
+
 
                 // set concert state active
                 concertState.active = true;
+                document.getElementById("concert-live-state").innerHTML = "Online";
             }
 
             var peer = new Peer();
@@ -33,12 +53,11 @@
                 document.getElementById("room-id").innerHTML = peer.id;
             });
             peer.on('connection', function(conn) {
-                let logLineHtmlDomElement = document.createElement("p");
-                logLineHtmlDomElement.innerHTML = "Connection Received: " + conn.peer;
-                document.body.append(logLineHtmlDomElement);
                 conn.on('open', function() {
                     // Send messages
-                    // conn.send(concertState);
+                    let logLineHtmlDomElement = document.createElement("p");
+                    logLineHtmlDomElement.innerHTML = "Connection Received: " + conn.peer;
+                    document.getElementById("connection-list").append(logLineHtmlDomElement);
                 });
 
                 conn.on('data', function() {
@@ -47,13 +66,16 @@
                 });
 
                 conn.on('close', function() {
-                    let children = document.getElementById("connection-list");
+                    let children = document.getElementById("connection-list").children;
 
-                    for(let child of children) 
+                    for(let child of children)  {
                         if(child.innerHTML && child.innerHTML.indexOf(conn.peer) != -1) 
                             child.remove();
+                    }
                 });
             });
+
+            // peer.on("d")
         </script>
     </body>
 </html>
