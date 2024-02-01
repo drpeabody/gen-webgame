@@ -177,7 +177,7 @@ const ANIMATION_MANAGER = new AnimationManager([
         let N = 10.0;
         let height = 0.0;
         for(let i = 0.0; i < 1.0; i += (1.0/N)) {
-            let index = Math.round(i * bufferLength / N);
+            let index = Math.round(i * spectrogram.bufferLength / N);
             height += 200 * Math.abs(spectrogram.currentHeightArray[index]);
             ctx.beginPath();
             ctx.ellipse(anim.X, anim.Y - height, anim.size * (1.0 - i), anim.flatHeight * (1.0 - i), 0, 0, 2*Math.PI);
@@ -204,7 +204,7 @@ logo.X = WIDTH/2 - bannerDimension/2 - 140;
 logo.Y = HEIGHT/2 - bannerDimension/2;
 logo.width = bannerDimension+140;
 logo.height = bannerDimension;
-logo.image.src = "./resources/linkin-park-logo.svg";
+logo.image.src = "./resources/new-divide/linkin-park-logo.svg";
 logo.image.onload = () => { logo.enabled = true; }
 
 let chester = new StaticDrawing((ctx, drawing) => {
@@ -213,7 +213,7 @@ let chester = new StaticDrawing((ctx, drawing) => {
 chester.image = new Image();
 chester.X = 0;
 chester.Y = 0;
-chester.image.src = "./resources/chester-bennington.png";
+chester.image.src = "./resources/new-divide/chester-bennington.png";
 chester.image.onload = () => { chester.enabled = true; }
 
 
@@ -237,7 +237,7 @@ function draw() {
 loadFirstSong = () => {
     
     //set the audio file's URL
-    var audioURL = './resources/02NewDivide(Live).mp3';
+    var audioURL = './resources/new-divide/02NewDivide(Live).mp3';
 
     //creating a new request
     var request = new XMLHttpRequest();

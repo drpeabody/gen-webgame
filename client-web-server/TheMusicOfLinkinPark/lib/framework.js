@@ -4,9 +4,10 @@ utilShortNumberTo2DigitHex = (number) => {
 }
 
 class StaticDrawing {
-    constructor(drawCallBack) {
+    constructor(drawCallBack, initalizer = undefined) {
         this.enabled = false;
         this.drawCallBack = drawCallBack;
+        if(initalizer) initalizer(this);
     }
     drawAndUpdate(ctx) {
         if(this.drawCallBack && this.enabled) {
