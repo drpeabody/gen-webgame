@@ -96,3 +96,53 @@ class Cue {
     getTime() { return this.time; }
     getChange() { return this.change; }
 }
+
+
+class Song {
+    constructor(songURL, animationManager, allStaticAnimations) {
+        this.songURL = songURL;
+        this.animationManager = animationManager;
+        this.allStaticAnimations = allStaticAnimations;
+        this.audioArrayBuffer = null;
+    }
+
+    load() {
+        let songRef = this;
+        let request = new XMLHttpRequest();
+        request.open('GET', this.songURL, true);
+        request.responseType = 'arraybuffer';
+        request.onload = function () {
+            //take the audio from http request and decode it in an audio buffer
+            audioCtx.decodeAudioData(request.response, function (buffer) {
+                songRef.audioArrayBuffer = buffer;
+            });
+        };
+        request.send();
+    }
+
+    isAudioLoaded() {
+        return this.audioArrayBuffer != null;
+    }
+    
+    start(source) {
+        if(!this.isAudioLoaded()) {
+            throw new Error("Cannot start without loading audio");
+        }
+        source.buffer = this.audioArrayBuffer;
+        this.animationManager.start();
+    }
+
+    draw(canvasCtx) {
+
+        // Draw background
+        canvasCtx.fillStyle = "#110418";
+        canvasCtx.fillRect(0, 0, WIDTH, HEIGHT);
+    
+        // Draw Animated Elements
+        this.animationManager.drawAndUpdate(canvasCtx, Date.now());
+        // Draw all static drawings
+        for(let drawingName in this.allStaticAnimations) {
+            this.allStaticAnimations[drawingName].drawAndUpdate(canvasCtx);
+        }
+    }
+}

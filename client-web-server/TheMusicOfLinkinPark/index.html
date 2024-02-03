@@ -92,21 +92,21 @@
             let hostConnection = null;
 
             peer.on('open', function(id) {
-            try {
-                let url = window.location.search;
-                console.log("URL RECEIVED: " + url);
-                let getQuery = url.split('?')[1];
-                let pair = getQuery.split('=');
-                
-                if(pair[0] === "RoomId" && typeof pair[1] === "string") {
-                    roomId = pair[1];
-                    giveUserMsgThroughLabel("Establishing Connection to Web Concert...");
+                try {
+                    let url = window.location.search;
+                    console.log("URL RECEIVED: " + url);
+                    let getQuery = url.split('?')[1];
+                    let pair = getQuery.split('=');
+                    
+                    if(pair[0] === "RoomId" && typeof pair[1] === "string") {
+                        roomId = pair[1];
+                        giveUserMsgThroughLabel("Establishing Connection to Web Concert...");
+                    }
+                } catch (error) {
+                    console.log( new Error("Invalid URL: " + window.location.search) );
                 }
-            } catch (error) {
-                console.log( new Error("Invalid URL: " + window.location.search) );
-            }
                 console.log("Connected: " + peer.id);
-                
+                    
                 try {
                     hostConnection = peer.connect(roomId);
                     hostConnection.on('open', function() {
@@ -132,9 +132,137 @@
                 }
             });
 
+            source = null;
+            analyser = null;
+            gainNode = null;
+
+            canvas = document.getElementById("canvas");
+            canvas.height = window.innerHeight;
+            canvas.width = window.innerWidth;
+            canvasCtx = canvas.getContext("2d");
+            WIDTH = canvas.width;
+            HEIGHT = canvas.height;
+
+            timeDataArrayLength = 256;
+            timeDataArray = new Float32Array(timeDataArrayLength);
+            secondTimeDerivative = new Float32Array(timeDataArrayLength);
+            firstTimeDerivative = new Float32Array(timeDataArrayLength);
+
+            allSongs = [];
+            currentSongIndex = 0;
+
+            function allSongsDoneLoading() {
+                for(let i = 0; i < allSongs.length; i++) {
+                    if(! allSongs[i].isAudioLoaded()) return false;
+                }
+                return true;
+            }
+
+            function getCurrentSong() {
+                return allSongs[currentSongIndex];
+            }
+            function cueInNextSong() {
+                currentSongIndex++;
+                getCurrentSong().start(source);
+                source.start(0);
+            }
+
+            window.onload = () => {
+                audioCtx = new AudioContext();
+                analyser = audioCtx.createAnalyser();
+                source = audioCtx.createBufferSource();
+                gainNode = audioCtx.createGain();
+
+                // Initialise Audio graph parameters
+                source.onended = cueInNextSong;
+                gainNode.gain.value = 0.1; // 10 %
+                analyser.fftSize = getTimeDataArray().length;
+                
+                // Initialise Audio graph
+                gainNode.connect(audioCtx.destination);
+                analyser.connect(gainNode);
+                source.connect(analyser);
+            };
+
+            function getTimeDataArray() {
+                // Return smoothed array for the songs to use for drawing
+                return secondTimeDerivative;
+            }
+
+            
+        </script>
+        
+        <script>
+            // Draw UI
+            const MIN_VOLUME = 0.0, MAX_VOLUME = 2.0;
+            const UICornerMargin = Math.min(WIDTH * 0.05, HEIGHT * 0.05);
+            const volumeControlX = UICornerMargin, volumeControlY = HEIGHT - UICornerMargin;
+            const volumeControlHalfHeight = 20, volumeControlWidth = 3, volumeControlBarWidth = 1;
+
+            function drawUI () {
+
+                canvasCtx.lineWidth = volumeControlBarWidth;
+                canvasCtx.strokeStyle = "#fff";
+                canvasCtx.beginPath();
+                canvasCtx.moveTo(volumeControlX, volumeControlY - volumeControlHalfHeight);
+                canvasCtx.lineTo(volumeControlX, volumeControlY + volumeControlHalfHeight);
+                canvasCtx.stroke();
+                canvasCtx.closePath();
+
+                const currentVolume = gainNode.gain.value;
+                const volumeFractionOfTotal = (currentVolume / MAX_VOLUME) * volumeControlHalfHeight * 2;
+                const volumeControlPosition = volumeControlY + volumeControlHalfHeight - volumeFractionOfTotal;
+                canvasCtx.lineWidth = volumeControlWidth;
+                canvasCtx.strokeStyle = "#fff";
+                canvasCtx.beginPath();
+                canvasCtx.moveTo(volumeControlX - volumeControlWidth, volumeControlPosition );
+                canvasCtx.lineTo(volumeControlX + volumeControlWidth, volumeControlPosition );
+                canvasCtx.stroke();
+                canvasCtx.closePath();
+            }
+        </script>
+        
+        <script>
+            
+            function draw() {
+                analyser.getFloatTimeDomainData(timeDataArray);
+
+                for (let i = 0; i < timeDataArray.length; i++) {
+                    // Smooth the curve over time
+                    firstTimeDerivative[i] += (timeDataArray[i] - firstTimeDerivative[i]) * 0.1;
+                    secondTimeDerivative[i] += (firstTimeDerivative[i] - secondTimeDerivative[i]) * 0.1;
+                }
+                getCurrentSong().draw(canvasCtx);
+
+                drawUI();
+                requestAnimationFrame(draw);
+            };
+
+            // rename to startConcert
+            loadFirstSong = () => {
+
+                if(allSongsDoneLoading()) {
+                    getCurrentSong().start(source);
+                    source.start(0);
+                    draw();
+                } else {
+                    console.log("Still Loading!");
+                }
+            }
+        </script>
+        <script>
+            document.addEventListener("wheel", (eventObj) => {
+                // event.preventDefault(); // Commented since this event is registered as 'passive'
+                let value = gainNode.gain.value;
+                value += Math.sign(event.deltaY) * -0.1;
+                // value += event.deltaY * -0.001;
+                // Restrict scale
+                gainNode.gain.value = Math.min(Math.max(MIN_VOLUME, value), MAX_VOLUME);
+            })
         </script>
     </body>
     
     <script src="lib/framework.js"></script>
-    <script src="./index.js"></script>
+    <script src="./resources/the-messenger/index.js"></script>
+    <script src="./resources/new-divide/index.js"></script>
 </html>
