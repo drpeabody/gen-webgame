@@ -163,8 +163,17 @@
             }
             function cueInNextSong() {
                 currentSongIndex++;
-                getCurrentSong().start(source);
-                source.start(0);
+
+                // Dont do anything if all songs have been played
+                if(currentSongIndex < allSongs.length) {
+                    oldSource = source;
+                    source = audioCtx.createBufferSource();
+                    oldSource.disconnect();
+                    source.connect(analyser);
+
+                    getCurrentSong().start(source);
+                    source.start(0);
+                }
             }
 
             window.onload = () => {

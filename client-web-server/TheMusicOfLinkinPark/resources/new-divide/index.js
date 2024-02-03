@@ -193,8 +193,8 @@ const songNewDivide = new Song(
             logo.Y = HEIGHT/2 - bannerDimension/2;
             logo.width = bannerDimension+140;
             logo.height = bannerDimension;
-            logo.image.src = "./resources/new-divide/linkin-park-logo.svg";
             logo.image.onload = () => { logo.enabled = true; }
+            logo.image.src = "./resources/common/linkin-park-logo.svg";
         }),
     
         "chester":  new StaticDrawing((ctx, drawing) => {
@@ -203,8 +203,8 @@ const songNewDivide = new Song(
             chester.image = new Image();
             chester.X = 0;
             chester.Y = 0;
-            chester.image.src = "./resources/new-divide/chester-bennington.png";
             chester.image.onload = () => { chester.enabled = true; }
+            chester.image.src = "./resources/new-divide/chester-bennington.png";
         })
     
     }

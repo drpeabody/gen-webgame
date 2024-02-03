@@ -17,7 +17,6 @@ const songTheMessenger = new Song(
     , 
     // All Static Drawings
     { 
-        
         "logo":  new StaticDrawing((ctx, drawing) => {
             ctx.drawImage(drawing.image, drawing.X, drawing.Y, drawing.width, drawing.height);
         }, (logo) => {
@@ -27,8 +26,8 @@ const songTheMessenger = new Song(
             logo.Y = HEIGHT/2 - bannerDimension/2;
             logo.width = bannerDimension+140;
             logo.height = bannerDimension;
-            logo.image.src = "./resources/common/linkin-park-logo.svg";
             logo.image.onload = () => { logo.enabled = true; }
+            logo.image.src = "./resources/common/linkin-park-logo.svg";
         })
     
     }
