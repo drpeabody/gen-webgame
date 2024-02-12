@@ -12,7 +12,15 @@ const songTheMessenger = new Song(
     
     // All animated Drawings
     {
-        
+        "clouds": new AnimatedDrawing(1000, (ctx, clouds) => {
+            ctx.drawImage(clouds.image, clouds.X, clouds.Y, WIDTH, HEIGHT);
+        }, (newCLouds) => {
+            newCLouds.image = new Image();
+            newCLouds.X = 0;
+            newCLouds.Y = 0;
+            newCLouds.image.onload = () => { newCLouds.enabled = true; }
+            newCLouds.image.src = "./resources/the-messenger/clouds.png";
+        })
     })
     , 
     // All Static Drawings

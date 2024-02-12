@@ -36,6 +36,7 @@
         </style>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js" integrity="sha512-aNMyYYxdIxIaot0Y1/PLuEu3eipGCmsEUBrUq+7aVyPGMFH8z0eTP0tkqAvv34fzN6z+201d3T8HPb1svWSKHQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
         <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+        <script src="lib/framework.js"></script>
     </head>
     <body>
         <canvas id="canvas"></canvas>
@@ -140,20 +141,21 @@
             canvas.height = window.innerHeight;
             canvas.width = window.innerWidth;
             canvasCtx = canvas.getContext("2d");
-            WIDTH = canvas.width;
-            HEIGHT = canvas.height;
+            WIDTH = canvas.width; // All caps variable is used by songs later as globals
+            HEIGHT = canvas.height; // All caps variable is used by songs later as globals
 
             timeDataArrayLength = 256;
             timeDataArray = new Float32Array(timeDataArrayLength);
             secondTimeDerivative = new Float32Array(timeDataArrayLength);
             firstTimeDerivative = new Float32Array(timeDataArrayLength);
-
+            
+            RANDOM = new RandomNumberBucket(); // All caps variable is used by songs later as globals
             allSongs = [];
             currentSongIndex = 0;
 
             function allSongsDoneLoading() {
-                for(let i = 0; i < allSongs.length; i++) {
-                    if(! allSongs[i].isAudioLoaded()) return false;
+                for(let song of allSongs)  {
+                    if(! song.isAudioLoaded()) return false;
                 }
                 return true;
             }
@@ -271,22 +273,27 @@
         </script>
     </body>
     
-    <script src="lib/framework.js"></script>
 
     <!-- This also defines the order of the songs in the track list -->
-    <script src="./resources/by_myslf/index.js"></script>
-    <script src="./resources/in-the-end/index.js"></script>
-    <script src="./resources/numb/index.js"></script>
+    <!-- <script src="./resources/the-messenger/index.js"></script> -->
     <script src="./resources/new-divide/index.js"></script>
-    <script src="./resources/castle-of-glass/index.js"></script>
-    
-    <script src="./resources/wretches-and-kings/index.js"></script>
-    <script src="./resources/heavy/index.js"></script>
-    
-    <script src="./resources/leave-out-all-the-rest/index.js"></script>
-    <script src="./resources/iridescent/index.js"></script>
-    <script src="./resources/the-messenger/index.js"></script>
-    
-    <script src="./resources/when-they-come-for-me/index.js"></script>
-    <script src="./resources/final-masquerade/index.js"></script>
+
+    <!--
+        
+        <script src="./resources/by_myslf/index.js"></script>
+        <script src="./resources/in-the-end/index.js"></script>
+        <script src="./resources/numb/index.js"></script>
+        <script src="./resources/new-divide/index.js"></script>
+        <script src="./resources/castle-of-glass/index.js"></script>
+        
+        <script src="./resources/wretches-and-kings/index.js"></script>
+        <script src="./resources/heavy/index.js"></script>
+        
+        <script src="./resources/leave-out-all-the-rest/index.js"></script>
+        <script src="./resources/iridescent/index.js"></script>
+        <script src="./resources/the-messenger/index.js"></script>
+        
+        <script src="./resources/when-they-come-for-me/index.js"></script>
+        <script src="./resources/final-masquerade/index.js"></script>
+    -->
 </html>

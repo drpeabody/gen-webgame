@@ -146,3 +146,18 @@ class Song {
         }
     }
 }
+
+class RandomNumberBucket {
+    constructor(n = 1e6) {
+        this.bucket = [];
+        this.idx = 0;
+        for(let i = 0; i < n; i++) {
+            this.bucket.push(Math.random());
+        }
+    }
+
+    next() {
+        if(this.idx >= this.bucket.length) this.idx = 0;
+        return this.bucket[this.idx++];
+    }
+}
