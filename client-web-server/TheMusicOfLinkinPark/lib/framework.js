@@ -4,10 +4,10 @@ utilShortNumberTo2DigitHex = (number) => {
 }
 
 class StaticDrawing {
-    constructor(drawCallBack, initalizer = undefined) {
+    constructor(drawCallBack, initializer = undefined) {
         this.enabled = false;
         this.drawCallBack = drawCallBack;
-        if(initalizer) initalizer(this);
+        if(initializer) initializer(this);
     }
     drawAndUpdate(ctx) {
         if(this.drawCallBack && this.enabled) {
@@ -15,20 +15,28 @@ class StaticDrawing {
         }
     }
 }
+/*
 
-class AnimatedDrawing {
-    constructor(durationInMS, drawCallBack, initalizer = undefined) {
+    interface Animated {
+        float getCurrentAnimationPos(); // Returns a float in interval [0.0, 1.0]
+        void drawAndUpdate(ctx, currentUnixTimeInMS); // increment time and draw if need be
+    }
+
+*/
+
+class AnimatedDrawing { // Implements Animated
+    constructor(durationInMS, drawCallBack, initializer = undefined) {
         this.enabled = false;
         this.timeSinceResetInMS = 0;
         this.durationInMS = durationInMS;
         this.lastUpdateUnixTime = 0;
         this.drawCallBack = drawCallBack;
-        if(initalizer) initalizer(this);
+        if(initializer) initializer(this);
     }
-    getCurrentAnimationPos() {
+    getCurrentAnimationPos() { // Override
         return (this.timeSinceResetInMS * 1.0) / this.durationInMS;
     }
-    drawAndUpdate(ctx, currentUnixTimeInMS) {
+    drawAndUpdate(ctx, currentUnixTimeInMS) { // Override
         if(!this.enabled) return;
         if(this.timeSinceResetInMS > this.durationInMS) 
             this.timeSinceResetInMS = this.timeSinceResetInMS % this.durationInMS; // Loop this animation 
@@ -40,6 +48,19 @@ class AnimatedDrawing {
         this.timeSinceResetInMS += (currentUnixTimeInMS - this.lastUpdateUnixTime);
         this.lastUpdateUnixTime = currentUnixTimeInMS;
     } 
+}
+
+class AnimatedParticlesDrawing { // Implements Animated
+    constructor(durationInMS, drawCallBack, initializer = undefined) {
+        this.animDrawing = new AnimatedDrawing(durationInMS, drawCallBack, initializer);
+    }
+
+    getCurrentAnimationPos() { // Override
+        return this.animDrawing.getCurrentAnimationPos();
+    }
+    drawAndUpdate(ctx, currentUnixTimeInMS) { // Override
+        this.animDrawing.drawAndUpdate(ctx, currentUnixTimeInMS);
+    }
 }
 
 class AnimationManager {
@@ -63,10 +84,10 @@ class AnimationManager {
             let cueToApply = manager.animationCues[manager.currentCueIndex];
             let changes = cueToApply.getChange();
 
-            for(let animatonName of Object.keys(changes)) {
-                let applyChangesFunction = changes[animatonName];
-                if(animatonName in manager.allAnimations) {
-                    applyChangesFunction(manager.allAnimations[animatonName]);
+            for(let animationName of Object.keys(changes)) {
+                let applyChangesFunction = changes[animationName];
+                if(animationName in manager.allAnimations) {
+                    applyChangesFunction(manager.allAnimations[animationName]);
                 }
             }
             manager.currentCueIndex ++;
