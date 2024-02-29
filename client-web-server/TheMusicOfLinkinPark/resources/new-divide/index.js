@@ -205,7 +205,8 @@ const songNewDivide = new Song(
             chester.Y = 0;
             chester.image.onload = () => { chester.enabled = true; }
             chester.image.src = "./resources/new-divide/chester-bennington.png";
-        })
+        }),
+        "sharpy-test": new SharpyLight(WIDTH * 0.15, HEIGHT, Math.PI/7, HEIGHT, 0.12, "#ff00ff")
     
     }
 );

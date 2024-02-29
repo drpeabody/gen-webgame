@@ -3,8 +3,32 @@ utilShortNumberTo2DigitHex = (number) => {
     return Math.min(Math.max(number, 0), 255).toString(16);
 }
 
+// Off Screen Canvas Cache Feature
+let utilOffScreenCanvas = undefined;
+utilGetOrCreateOffScreenCanvas = () => {
+    if(!utilOffScreenCanvas) {
+        utilOffScreenCanvas = document.createElement('canvas');
+        if(!canvas) {
+            console.log("Warning: base canvas is null, not setting off screen canvas size");
+        } else {
+            utilOffScreenCanvas.height = canvas.height;
+            utilOffScreenCanvas.width = canvas.width;
+        }
+    }
+    return utilOffScreenCanvas;
+}
+
+utilLength = (dx, dy) => Math.sqrt(dx*dx + dy*dy);
+
+/*
+
+    interface Static {
+        void drawAndUpdate(ctx);
+    }
+
+*/
 class StaticDrawing {
-    constructor(drawCallBack, initializer = undefined) {
+    constructor(drawCallBack, initializer = undefined) { // implements Static
         this.enabled = false;
         this.drawCallBack = drawCallBack;
         if(initializer) initializer(this);
@@ -50,18 +74,18 @@ class AnimatedDrawing { // Implements Animated
     } 
 }
 
-class AnimatedParticlesDrawing { // Implements Animated
-    constructor(durationInMS, drawCallBack, initializer = undefined) {
-        this.animDrawing = new AnimatedDrawing(durationInMS, drawCallBack, initializer);
-    }
+// class AnimatedParticlesDrawing { // Implements Animated
+//     constructor(durationInMS, drawCallBack, initializer = undefined) {
+//         this.animDrawing = new AnimatedDrawing(durationInMS, drawCallBack, initializer);
+//     }
 
-    getCurrentAnimationPos() { // Override
-        return this.animDrawing.getCurrentAnimationPos();
-    }
-    drawAndUpdate(ctx, currentUnixTimeInMS) { // Override
-        this.animDrawing.drawAndUpdate(ctx, currentUnixTimeInMS);
-    }
-}
+//     getCurrentAnimationPos() { // Override
+//         return this.animDrawing.getCurrentAnimationPos();
+//     }
+//     drawAndUpdate(ctx, currentUnixTimeInMS) { // Override
+//         this.animDrawing.drawAndUpdate(ctx, currentUnixTimeInMS);
+//     }
+// }
 
 class AnimationManager {
     constructor(animationCues, allAnimations) {
@@ -72,7 +96,7 @@ class AnimationManager {
     
     drawAndUpdate(ctx, currentUnixTimeInMS) {
         for(let animName in this.allAnimations) {
-            this.allAnimations[animName].drawAndUpdate(ctx, currentUnixTimeInMS);
+            this.allAnimations[animName].drawAndUpdate(ctx, currentUnixTimeInMS); // Animated.drawAndUpdate(CanvasRenderingContext2D, DateTime)
         }
     }
 
@@ -163,7 +187,7 @@ class Song {
         this.animationManager.drawAndUpdate(canvasCtx, Date.now());
         // Draw all static drawings
         for(let drawingName in this.allStaticAnimations) {
-            this.allStaticAnimations[drawingName].drawAndUpdate(canvasCtx);
+            this.allStaticAnimations[drawingName].drawAndUpdate(canvasCtx); // Static.drawAndUpdate(CanvasRenderingContext2D)
         }
     }
 }
@@ -180,5 +204,84 @@ class RandomNumberBucket {
     next() {
         if(this.idx >= this.bucket.length) this.idx = 0;
         return this.bucket[this.idx++];
+    }
+}
+
+/*
+
+  Tools Built upon Framework code
+
+*/
+
+
+
+class SharpyLight { // implements Static
+    constructor(x, y, angle, length, coneAngle, color) {
+        
+        // Calculate required area on off screen canvas
+        this.points = [
+            [x, y], 
+            [x + length*Math.cos(angle+coneAngle/2), y - length*Math.sin(angle+coneAngle/2)],
+            [x + length*Math.cos(angle-coneAngle/2), y - length*Math.sin(angle-coneAngle/2)]
+        ];
+
+        this.x = x;
+        this.y = y;
+        this.angle = angle;
+        this.length = length;
+        this.coneAngle = coneAngle;
+        this.color = color;
+
+        this.offScreenCanvas = undefined;
+    }
+
+
+    fillTriangle(ctx, points) {
+        ctx.beginPath();
+        ctx.moveTo(points[0][0], points[0][1]);
+        ctx.lineTo(points[1][0], points[1][1]);
+        ctx.lineTo(points[2][0], points[2][1]);
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    drawOffScreen() {
+        if(!this.offScreenCanvas) {
+            this.offScreenCanvas = utilGetOrCreateOffScreenCanvas();
+        }
+        const ctx2 = this.offScreenCanvas.getContext('2d');
+        
+        // clear required area
+        ctx2.clearRect(0, 0, this.offScreenCanvas.width, this.offScreenCanvas.height);
+
+        const gradient = ctx2.createConicGradient(-this.angle, this.x, this.y);
+        const coneHalfAngleFraction = (this.coneAngle/2)/(Math.PI*2);
+        gradient.addColorStop(0, this.color + "ff");
+        gradient.addColorStop(coneHalfAngleFraction, this.color + "00");
+        gradient.addColorStop(1 - coneHalfAngleFraction, this.color + "00");
+        gradient.addColorStop(1, this.color + "ff");
+        
+        // Draw Cone light onto off-screen canvas
+        ctx2.fillStyle = gradient;
+        this.fillTriangle(ctx2, this.points);
+        
+        // Create masking gradient using off-screen canvas context
+        const fullGradient = ctx2.createRadialGradient(this.x, this.y, 1, this.x, this.y, this.length);
+        fullGradient.addColorStop(0, "#ffff");
+        fullGradient.addColorStop(1, "#fff0");
+        
+        // Draw layer mask
+        ctx2.globalCompositeOperation = "destination-in";
+        ctx2.fillStyle = fullGradient;
+        this.fillTriangle(ctx2, this.points);
+    }
+
+    drawAndUpdate(ctx) { // Override
+        if(!this.offScreenCanvas) {
+            this.drawOffScreen();
+        }
+        
+        // draw required area from offScreenCanvas
+        ctx.drawImage(this.offScreenCanvas, 0, 0);
     }
 }
